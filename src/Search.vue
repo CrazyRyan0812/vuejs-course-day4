@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useSearchStore } from '../../stores/SearchStore';
+import { useSearchStore } from './stores/SearchStore';
 import SearchItem from './SearchItem.vue';
 import axios from 'axios';
 

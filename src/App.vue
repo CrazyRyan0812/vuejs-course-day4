@@ -1,5 +1,5 @@
 <script setup>
-import Search from './components/ui/Search';
+import Search from './Search.vue'
 import { ref, onMounted } from 'vue';
 
 onMounted(() => {
