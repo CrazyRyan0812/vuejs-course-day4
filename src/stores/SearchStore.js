@@ -1,19 +1,34 @@
 import { defineStore } from "pinia"
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import axios from "axios"
 
 const useSearchStore = defineStore("shops", () => {
-  const shops = ref([])               // 所有站點資料
-  const filteredShops = ref([])       // 篩選後的資料
-  const searchKeyword = ref("")       // 搜尋關鍵字
+  const shops = ref([]) //站點
+  const filteredShops = ref([]) //已篩選出的搜尋後站點
+  const searchKeyword = ref("")
+  const favoriteSnos = ref(new Set()); //用Set來儲存站點資訊
 
-  // 取得所有站點資料
+  const favoriteShops = computed(() => {
+    return shops.value.filter(shop => favoriteSnos.value.has(shop.sno));
+  });
+
+  const loadFavorites = () => {
+    const favs = localStorage.getItem('favoriteShops');
+    if (favs) {
+      favoriteSnos.value = new Set(JSON.parse(favs));
+    }
+  }
+  
+  const saveFavorites = () => {
+    localStorage.setItem('favoriteShops', JSON.stringify([...favoriteSnos.value])); // 將Set轉換成陣列在轉換成json字串
+    console.log('存入localStorage:', localStorage.getItem('favoriteShops'));
+  }
+
   const getShops = async () => {
     const { data } = await axios.get("https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json")
     shops.value = data
   }
 
-  // 依關鍵字搜尋站點名稱
   const searchShop = (keyword) => {
     searchKeyword.value = keyword
     filteredShops.value = shops.value.filter(shop =>
@@ -21,26 +36,34 @@ const useSearchStore = defineStore("shops", () => {
     )
   }
 
-  // 新增站點（範例，實務中可能用不到）
-  const addShop = (content) => {
-    // 這裡可以加入新增邏輯
-    // 目前範例直接加入到 `shops` 和 `filteredShops`
-    const newShop = {
-      id: crypto.randomUUID(),
-      sna: content,
-      // 其他必要屬性可補充
+  const toggleFavorite = (shop) => {
+    console.log('before:', [...favoriteSnos.value]);
+    if (favoriteSnos.value.has(shop.sno)) {
+      favoriteSnos.value.delete(shop.sno);
+      console.log('刪除:', shop.sna);
+    } else {
+      favoriteSnos.value.add(shop.sno);
+      console.log('加入:', shop.sna);
     }
-    shops.value.unshift(newShop)
-    filteredShops.value.unshift(newShop)
+    saveFavorites();
+    console.log('after:', [...favoriteSnos.value]);
+  }
+
+  const isFavorite = (shop) => {
+    return favoriteSnos.value.has(shop.sno);
   }
 
   return {
     shops,
     filteredShops,
-    searchShop,
-    getShops,
-    addShop,
     searchKeyword,
+    favoriteSnos,
+    favoriteShops,
+    loadFavorites,
+    getShops,
+    searchShop,
+    toggleFavorite,
+    isFavorite
   }
 })
 

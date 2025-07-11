@@ -2,31 +2,27 @@
 import { ref, onMounted } from 'vue';
 import { useSearchStore } from './stores/SearchStore';
 import SearchItem from './SearchItem.vue';
-import axios from 'axios';
 
 const store = useSearchStore();
 
 const shopInput = ref('');
+const showFavorites = ref(false);
 
-const onAddShop = () => {
-  const content = shopInput.value;
-  if (content.trim() !== '') {
-    store.addShop(content);
-    shopInput.value = '';
-  }
-};
+const toggleFavoritesDisplay = () => {
+  showFavorites.value = !showFavorites.value;
+}
 
 const onSearchShop = () => {
   const content = shopInput.value;
   if (content.trim() !== '') {
     store.searchShop(content);
-    // 不用清空，讓用戶可以連續搜尋
-    // shopInput.value = ""
+    shopInput.value = ""
   }
 };
 
 onMounted(() => {
   store.getShops();
+  store.loadFavorites();
 });
 </script>
 
@@ -41,13 +37,34 @@ onMounted(() => {
         class="input"
       />
       <button @click="onSearchShop" class="btn">搜尋</button>
+      <button @click="toggleFavoritesDisplay" class="btn btn-success">
+        {{ showFavorites ? '隱藏收藏' : '展開收藏' }}
+      </button>
     </div>
+
+    <div v-if="showFavorites" class="my-2 p-2 border border-gray-300 rounded bg-gray-50">
+      <h3 class="font-bold mb-2">收藏站點</h3>
+      <div v-if="store.favoriteShops.length === 0">尚未收藏任何站點</div>
+      <div v-else>
+        <SearchItem
+          v-for="shop in store.favoriteShops"
+          :key="shop.sno"
+          :shop="shop"
+          :isFavorite="store.isFavorite(shop)"
+          @toggle-favorite="store.toggleFavorite"
+        />
+      </div>
+    </div>
+
     <div class="divider"></div>
+
     <section>
       <SearchItem
         v-for="shop in store.filteredShops"
         :key="shop.sno"
         :shop="shop"
+        :isFavorite="store.isFavorite(shop)"
+        @toggle-favorite="store.toggleFavorite"
       />
     </section>
   </section>
